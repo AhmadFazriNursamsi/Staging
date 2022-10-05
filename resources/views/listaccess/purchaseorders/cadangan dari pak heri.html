@@ -1,0 +1,343 @@
+<?php use App\Http\Controllers\HelpersController as Helpers; 
+$haveaccessadd = Helpers::checkaccess('purchaseorders', 'add');
+$haveaccessdelete = Helpers::checkaccess('purchaseorders', 'delete');
+?>
+@section('css')
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+@stop
+
+<x-app-layout>
+
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight hetf2"><i class="fa fa-plus"></i>
+            {{ __('Purchase Orders') }} <?php if($haveaccessadd): ?> 
+            <button type="button" id="btnAdd" class="btn btn-sm btn-success m-2" data-toggle="modal" data-target="#addUser">
+                <i class="fa fa-plus me-2"></i>Create Purchase Orders   
+            </button> <?php endif; ?>
+        </h2>
+    </x-slot>
+
+    <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 bg-white border-b border-gray-200">
+                    {{-- table --}}
+                    <div class="table-responsive">
+                        <table id="datastable" class="table text-start table-striped align-middle table-bordered table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <td></td>
+                                    <td><input type="text" class="form-control input-sm src_class_user" autocomplete="off" onkeyup="searcAjax(this)" placeholder="No Purchase Order" name="no_purchase_order"></td>
+                                    <td><input type="text" class="form-control input-sm src_class_user" autocomplete="off" onkeyup="searcAjax(this)" placeholder="Nama Produk" name="products_id"></td>
+                                    <td><input type="text" class="form-control input-sm src_class_user" autocomplete="off" onkeyup="searcAjax(this)" placeholder="Catatan" name="deskripsi_po"></td>
+                                    <td><input type="text" class="form-control input-sm src_class_user" autocomplete="off" onkeyup="searcAjax(this)" placeholder="Jumlah" name="jumlah_produk"></td>
+                                    <td>
+                                        <select name="active" class="form-control input-sm src_class_user" onchange="searcAjax(this, 1)">
+                                            <option value="">-- Status Active --</option>
+                                            <option value="1">Active</option>
+                                            <option value="0">Not Active</option>
+                                        </select>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <th><input type="checkbox" class="checkall" name="checkall"></th>
+                                    <th class="align-center">No Purchase Order</th>
+                                    <th class="align-center">Nama Produk</th>
+                                    <th class="align-center">Catatan</th>
+                                    <th class="align-center">Jumlah</th>
+                                    <th class="align-center">Active</th>
+                                    <th class="align-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tfoot>
+                                <tr>
+                                    <th></th>
+                                    <th class="align-center">No Purchase Order</th>
+                                    <th class="align-center">Nama Produk</th>
+                                    <th class="align-center">Catatan</th>
+                                    <th class="align-center">Jumlah</th>
+                                    <th class="align-center">Active</th>
+                                    <th class="align-center">Action</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    {{-- table --}}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAMPIL DATA MODAL CREATE -->
+    @if ($haveaccessadd)
+    <div class="modal fade" style="background: rgba(0, 0, 0, 0.7);" id="viewad" tabindex="-1" role="dialog" aria-labelledby="viewTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-md" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ModalLongTitle"></h5>
+                    <button type="button" class="close-modal btn btn-sm btn-danger close closeModalad" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                {{-- MODAL BODY --}}
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <form id="smbtn" enctype="multipart/form-data"> 
+                                {{--  --}}
+                                <div class="form-group">
+                                    <input type="hidden" id="id" class="inpt-cst-add" name="id">
+                                    <label for="no_purchase_order" class="form-label">No Purchase Order *</label>
+                                    <input type="text" class="form-control inpt-cst-add mb-2" name="no_purchase_order" id="no_purchase_order" aria-describedby="" placeholder="No Purchase Order" aria-describedby="basic-addon1">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Produk *</label>
+                                    <small style="color:white; visibility: hidden;">
+                                        *(P-01 : Produk Basah | P-02 : Produk Padat | P-03 :aaaaaaaaaaaaaaaaaaa)* 
+                                    </small>
+                                    <select id="select_products" name="products_id" data-placeholder="Select" class="form-control inpt-cst-add mb-2">                                           
+                                        {{-- isi --}}
+                                    </select>
+
+                                    {{-- <select class="form-control inpt-cst-add mb-2" required name="satuan" id="satuan">
+                                        <option value="">-- Pilih Satuan --</option>
+
+                                        <option value="">-- Pilih Satuan --</option>
+                                    </select> --}}
+                                </div>
+
+
+                                <div class="form-group">
+                                    <label for="deskripsi_po" class="form-label">Catatan Purchase Order</label>
+                                    <textarea name="deskripsi_po" class="form-control inpt-cst-add mb-2" id="deskripsi_po" cols="10" rows="6"></textarea>
+                                </div>
+
+                                <div class="form-group" style="float: right; text-align: right; right: 0; width: 2000px;">
+                                    <button type="button" class="btn btn-secondary btn-sm closeModalad" data-bs-dismiss="modal">Close</button>
+                                    <button type="submit" id="addvbtn" data-attid="" class="btn btn-success btn-sm"></button>
+                                </div>
+                                {{--  --}}                                
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {{-- MODAL BODY --}}
+            </div>
+        </div>
+    </div>
+    @endif
+    <!-- TAMPIL DATA MODAL CREATE -->
+
+    {{-- TAMPIL DATA MODAL VIEW --}}
+    <div class="modal fade" id="view" tabindex="-1" role="dialog" aria-labelledby="viewTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+            <div class="modal-content">
+                {{-- MODAL BODY --}}
+                <div class="modal-body">
+                    <ul class="nav nav-pills mb-10" id="pills-tab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="pills-home-tab" data-bs-toggle="pill" data-bs-target="#pills-home" type="button" role="tab" aria-controls="pills-home" aria-selected="true">Modal Details Info</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="pills-tabContent">
+                        <div class="tab-pane fade active show" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab">
+                            {{--  --}}
+                            <dl class="row mb-0" id="datauser-1"></dl>
+                            {{--  --}}
+                        </div>
+                    </div>
+                </div>
+                {{-- MODAL BODY --}}
+
+                <div class="modal-footer">
+                    <button id="closeModal" type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                        Close                        
+                    </button>
+                    @if ($haveaccessadd) :
+                        <span id="editvbtn" data-attid="" class="btn btn-success btn-sm"><i class="fa fa-edit"></i>Modal Edit Purchase Orders</span>
+                    @endif
+
+                    @if ($haveaccessdelete) :
+                        <button onClick="deleteyesshow()" data-attid="" data-deleteval="1" id="deletevbtn" class="btn btn-danger btn-sm"></a>
+                        <button onClick="undeleteyesshow()" data-attid="" data-deleteval="0" id="undeletevbtn" class="btn btn-success btn-sm"></a>
+                    @endif
+                </div>
+
+            </div>
+        </div>
+    </div>
+    {{-- TAMPIL DATA MODAL VIEW --}}
+
+    
+@section('script')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+
+<script type="text/javascript"> 
+
+$(document).ready(function() {
+    //  select province:start
+
+
+
+
+    $('#select_products').select2({
+        ajax: {
+            url: "{{ asset('/api/purchaseorders/search') }}",
+            dataType: 'json',
+            type: 'GET',
+            processResults: function(data) {
+                return {
+                    results: $.map(data.items, function(item) {
+                        return { id: item.id, text: item.text };
+                    })
+                }
+            },
+            cache: true
+        },
+        allowClear: true,
+        placeholder: 'Select at least one element'
+
+
+        // allowClear: true,
+        // ajax: {
+        //     url: "{{ asset('/api/purchaseorders/search') }}",
+        //     dataType: 'json',
+        //     delay: 250,
+        //     processResults: function(data) {       
+        //         var test = $.map(data.items, function(item) {  
+        //             return { id: item.id, text: item.text };
+        //         });
+        //         console.log(test, 'ok');
+        //         return {
+        //             results: $.map(data.items, function(item) {
+        //                 return { id: item.id, text: item.text };
+        //             })
+        //         }
+        //     }
+        // }
+    });
+});
+
+    
+
+    
+
+</script>
+
+<script>
+// --------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+    // FUNCTION SECARA GLOBAL
+    $(".closeModalad").click(function(){
+        $("#viewad").modal('hide');
+    });
+
+    $(".closeModalProduk").click(function(){
+        $("#viewProduk").modal('hide');
+    });
+
+    function showProduk()
+    {
+        $('#showProduk').modal('show');
+    } 
+
+    function addProduk()
+    {
+        $(".modalProduk").modal('show');
+        $("#ModalLongTitleProduk").html("Modal Title Produk Tambah"); // title MODAL CREATE
+
+    }
+    // FUNCTION SECARA GLOBAL
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    // FUNCTION UNTUK SEARCH
+    var url = "{{ asset('') }}";
+    function searcAjax(a, skip = 0){
+        if($(a).val().length > global_length_src || skip == 1) 
+        {
+            var getparam = getAllClassAndVal("src_class_user"); // helpers
+            $('#datastable').DataTable().ajax.url(url+"?"+getparam).load();
+        }
+        else {
+            $('#datastable').DataTable().ajax.url(url).load();
+        } 
+    }
+    // FUNCTION UNTUK SEARCH
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    // FUNCTION UNTUK MENAMPIKAN DATA DI DALAM TABLE 
+    $(document).ready(function()
+    {
+        // isi
+    });
+    // FUNCTION UNTUK MENAMPIKAN DATA DI DALAM TABLE 
+
+    // UNTUK MEMBUKA MODAL ADD
+    $("#btnAdd").click(function(){
+        clearInput("inpt-cst-add");
+        $('#viewad').modal('show'); 
+        $('#showProduk').show();
+
+        $("#ModalLongTitle").html("Purchase Orders Tambah"); // title MODAL CREATE
+        $("#addvbtn").html('<i class="fa fa-plus"></i> Add Purchase Orders');
+    });
+    // UNTUK MEMBUKA MODAL ADD
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    // FUNCTION UNTUK SUBMIT
+    $("#smbtn").submit(function(e)
+    {
+        e.preventDefault();
+        test = '@csrf';
+        token = $(test).val();
+
+        // isi
+    });
+    // FUNCTION UNTUK SUBMIT
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    // FUNCTION UNTUK MODAL DETAILS
+    function showdetail(idx) 
+    {
+
+    }
+    // FUNCTION UNTUK MODAL DETAILS
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    // FUNCTION KETIKA CLICK BTN EDIT
+    $("#editvbtn").click(function()
+    {
+        // isi
+    });
+    // FUNCTION KETIKA CLICK BTN EDIT
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    //  FUNCTION delete yes show
+
+    // FUNCTION delete yes show
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    // FUNCTION undelete yes show
+
+    // FUNCTION undelete yes show
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------------
+</script>
+@endsection 
+
+
+</x-app-layout>
